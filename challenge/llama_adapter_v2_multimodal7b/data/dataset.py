@@ -86,8 +86,8 @@ class FinetuneDataset(Dataset):
             format_instruction = data_item['instruction'],
             format_input = data_item['input']
             answer = data_item['output']
-        input1 = llama.utils.format_prompt(format_instruction, format_input)
-        input2 = input1 + answer
+        input1 = llama.utils.format_prompt(format_instruction, format_input) #input1: question
+        input2 = input1 + answer    #input2: question + answer
         input1 = torch.tensor(self.tokenizer.encode(input1, bos=True, eos=False), dtype=torch.int64)
         input2 = torch.tensor(self.tokenizer.encode(input2, bos=True, eos=True), dtype=torch.int64)
         padding = self.max_words - input2.shape[0]

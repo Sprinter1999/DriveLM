@@ -3021,7 +3021,7 @@
                     "CAM_BACK_RIGHT": "../nuscenes/samples/CAM_BACK_RIGHT/n008-2018-09-18-13-10-39-0400__CAM_BACK_RIGHT__1537291013628113.jpg"
                 }
             }
-        }
+        }    
     },
     "54cdaaae372d421fa4734d66f51a8c48": {
         "scene_description": "The ego vehicle proceeds along the current road, coming to a halt at the traffic light intersection.",

@@ -108,13 +108,16 @@ class LLaMA_adapter(nn.Module):
         
         else:
             raise ValueError(f"Unknown model phase: {phase}")
-        
+    
+    #FIXME: 应该是把图像转tokens
     def clip_encode_image(self, x):
         # modified from CLIP
+        #TODO: clip.visual ==> self.visual = ModifiedResNet or ViT, here we use ViT
         x = self.clip.visual.conv1(x)  # shape = [*, width, grid, grid]
         # shape = [*, width, grid ** 2]
         x = x.reshape(x.shape[0], x.shape[1], -1)
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
+        #TODO: clip.visual.class_embedding = nn.Parameter(scale * torch.randn(width))
         x = torch.cat([self.clip.visual.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1,
                       x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [*, grid ** 2 + 1, width]
         x = x + self.clip.visual.positional_embedding.to(x.dtype)
@@ -144,6 +147,8 @@ class LLaMA_adapter(nn.Module):
         visual_query = self.visual_query.weight.unsqueeze(
             0).repeat(len(imgs), 1, 1)
         visual_query = torch.cat([visual_query, clip_feats], dim=1)
+
+        # repeat for 8 layers in Transformer
         for block in self.visual_blocks:
             visual_query = block(visual_query)
 
@@ -153,6 +158,7 @@ class LLaMA_adapter(nn.Module):
 
         return visual_query
 
+    #FIXME: 此处的labels是指？
     def forward(self, tokens, labels, imgs):
         visual_query = self.forward_visual(imgs)
 
@@ -165,9 +171,11 @@ class LLaMA_adapter(nn.Module):
         mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=h.device)
         mask = torch.triu(mask, diagonal=0 + 1).type_as(h)
 
+        # 31 query layers
         for layer in self.llama.layers[:-1 * self.query_layer]:
             h = layer(h, 0, freqs_cis, mask)
 
+        #TODO: 多模态融合
         adapter = self.adapter_query.weight.reshape(self.query_layer, self.query_len, -1).unsqueeze(1)
         adapter_index = 0
         for layer in self.llama.layers[-1 * self.query_layer:]:
@@ -197,6 +205,7 @@ class LLaMA_adapter(nn.Module):
         freqs_cis = freqs_cis[start_pos : start_pos + seqlen]
         mask = None
         mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=h.device)
+        # 靠右上三角矩阵
         mask = torch.triu(mask, diagonal=start_pos + 1).type_as(h)
 
         for layer in self.llama.layers[:-1 * self.query_layer]:
