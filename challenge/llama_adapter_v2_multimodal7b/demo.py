@@ -16,11 +16,15 @@ except ImportError:
 parser = argparse.ArgumentParser(description='LLAMA Adapter')
 parser.add_argument('--llama_dir', type=str, default="/path/to/llama_model_weights", help='path to llama model weights')
 parser.add_argument('--checkpoint', type=str, default="/path/to/pre-trained/checkpoint.pth", help='path to pre-trained checkpoint')
-parser.add_argument('--data', type=str, default="../test_llama.json", help='path to test data')
-parser.add_argument('--output', type=str, default="../output.json", help='path to output file')
+parser.add_argument('--data', type=str, default="../test_v2.json", help='path to test data')
+parser.add_argument('--output', type=str, default="../llama-adapter-DriveLM.json", help='path to output file')
 args = parser.parse_args()
 
+#import os
+#os.environ["CUDA_VISIBLE_DEVICES"]="7"
+#device = torch.device('cuda')  
 device = "cuda" if torch.cuda.is_available() else "cpu"
+# print(f"$######CUDA: {torch.cuda.current_device()}")
 llama_dir = args.llama_dir
 
 # choose from BIAS-7B, LORA-BIAS-7B, CAPTION-7B.pth
